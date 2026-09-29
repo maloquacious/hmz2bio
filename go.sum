@@ -1,0 +1,12 @@
+github.com/maloquacious/dem2hm v1.1.0 h1:1cuXnLZnN32c31r9h3m9qlxGQgQ7UjOlBCmEYDSIQ3M=
+github.com/maloquacious/dem2hm v1.1.0/go.mod h1:wxZVDKOK+AJZXnSEqQCFURBL8OVrGfrajN/VIrqxdkY=
+github.com/maloquacious/hexg v1.3.0 h1:+CYdRF/+2bu6Y+NGjdR8TD+4YiWcCiNiLFJTdAtQlVw=
+github.com/maloquacious/hexg v1.3.0/go.mod h1:Un6Fvo4X/rCr5WTG4abr4Bos/9h7NyBvHqK4q5Ok4iY=
+github.com/maloquacious/hmz2ele v0.3.0 h1:+Rcyk301+gFKcyFKViPS8HVmi/GNyP1IKN5IIyULpmA=
+github.com/maloquacious/hmz2ele v0.3.0/go.mod h1:KqLRS1bxEC32a2nyTpOXT/wWOFoCWhjgcurUK0qn+Mw=
+github.com/maloquacious/hmz2riv v0.1.0 h1:ksyqmFfsp4OUFEH0J/Ou/uMJ3HdPePz5URPzVpL3fjE=
+github.com/maloquacious/hmz2riv v0.1.0/go.mod h1:auL69zlBLWwBtesFh5PPL5nS9ZMk2DYtJxnrlG2pcr0=
+github.com/maloquacious/hmz2ter v0.1.0 h1:EmoYQiMApXzBRB8xl4OGSwots5i+Pb0lMSQ5UTHxGWk=
+github.com/maloquacious/hmz2ter v0.1.0/go.mod h1:c0mkNa8xmp1qiPflMjEN+cgPSbIhgA+XrHPbbsxehAs=
+github.com/maloquacious/semver v0.4.1 h1:qwMBcA9VfkD1KsPIMcX7KW9/rnBpBQBbTTcZhlgOIgc=
+github.com/maloquacious/semver v0.4.1/go.mod h1:0VQ90ipG1SLXCDcQo1bgYTBIpvXsEiNOnEF5Bs/HRYY=
