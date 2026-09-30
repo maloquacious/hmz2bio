@@ -75,6 +75,13 @@ type Rules struct {
 	WesterliesFrom   float64 `json:"westerlies_from_deg"`
 	TradesMaxLat     float64 `json:"trades_max_lat_deg"`
 	WesterliesMinLat float64 `json:"westerlies_min_lat_deg"`
+	// Each wind is traced along WindRays bearings, evenly spaced from
+	// WindSpreadDeg on one side of its bearing to WindSpreadDeg on the other
+	// (a single ray follows the bearing itself), and a hex's moisture and
+	// lift are the means over the rays. A fan, rather than one ray, keeps a
+	// single peak or gap upwind from striping the map along the wind.
+	WindRays      int     `json:"wind_rays"`
+	WindSpreadDeg float64 `json:"wind_spread_deg"`
 
 	// Moisture: air leaves the sea saturated (1) and is traced upwind in
 	// steps of StepKm, for at most ReachKm. Each step keeps
@@ -161,6 +168,8 @@ func DefaultRules() Rules {
 		WesterliesFrom:   255,
 		TradesMaxLat:     27,
 		WesterliesMinLat: 33,
+		WindRays:         5,
+		WindSpreadDeg:    20,
 
 		StepKm:       5,
 		ReachKm:      1000,
@@ -210,6 +219,12 @@ func (r Rules) Validate() error {
 	if r.WesterliesMinLat < r.TradesMaxLat {
 		return fmt.Errorf("westerlies start at %g°, before the trades end at %g°", r.WesterliesMinLat, r.TradesMaxLat)
 	}
+	if r.WindRays < 1 {
+		return fmt.Errorf("wind rays %d: must be at least 1", r.WindRays)
+	}
+	if r.WindSpreadDeg < 0 {
+		return fmt.Errorf("wind spread %g°: must be at least 0", r.WindSpreadDeg)
+	}
 	if slices.ContainsFunc([]float64{r.StepKm, r.ReachKm, r.RainoutKm, r.OrographicM}, func(v float64) bool { return v <= 0 }) {
 		return fmt.Errorf("step, reach, rainout, and orographic settings must be positive")
 	}
@@ -239,4 +254,18 @@ func (r Rules) Wind(lat float64) (trades, westerlies, weight float64) {
 		weight = (x - r.TradesMaxLat) / (r.WesterliesMinLat - r.TradesMaxLat)
 	}
 	return trades, westerlies, weight
+}
+
+// WindOffsets returns the offsets, in degrees, of a wind's rays from its
+// bearing: WindRays values evenly spaced from −WindSpreadDeg to
+// +WindSpreadDeg, or just 0 for a single ray.
+func (r Rules) WindOffsets() []float64 {
+	if r.WindRays == 1 {
+		return []float64{0}
+	}
+	offsets := make([]float64, r.WindRays)
+	for i := range offsets {
+		offsets[i] = -r.WindSpreadDeg + 2*r.WindSpreadDeg*float64(i)/float64(r.WindRays-1)
+	}
+	return offsets
 }

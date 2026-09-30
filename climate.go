@@ -139,6 +139,19 @@ func (r Rules) Moisture(profile []float64) (moisture, lift float64) {
 	return moisture, profile[n] - low
 }
 
+// Fan returns the moisture and lift a wind from the bearing brings to the
+// hex: the means over the wind's rays (see Rules.WindOffsets), summed in
+// ray order.
+func (m *Map) Fan(h *hmz2ter.HexJSON, from float64, r Rules) (moisture, lift float64) {
+	offsets := r.WindOffsets()
+	for _, o := range offsets {
+		mo, li := r.Moisture(m.Profile(h, from+o, r))
+		moisture, lift = moisture+mo, lift+li
+	}
+	n := float64(len(offsets))
+	return moisture / n, lift / n
+}
+
 // Climate returns a land hex's climate. Everything uses the latitude rounded
 // as written to JSON.
 func (m *Map) Climate(h *hmz2ter.HexJSON, r Rules) Climate {
@@ -150,11 +163,11 @@ func (m *Map) Climate(h *hmz2ter.HexJSON, r Rules) Climate {
 	trades, westerlies, w := r.Wind(lat)
 	var moisture, lift float64
 	if w < 1 {
-		mo, li := r.Moisture(m.Profile(h, trades, r))
+		mo, li := m.Fan(h, trades, r)
 		moisture, lift = (1-w)*mo, (1-w)*li
 	}
 	if w > 0 {
-		mo, li := r.Moisture(m.Profile(h, westerlies, r))
+		mo, li := m.Fan(h, westerlies, r)
 		moisture, lift = moisture+w*mo, lift+w*li
 	}
 	c := Climate{

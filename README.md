@@ -17,6 +17,8 @@ Flags:
 
 - `-top-lat <deg>` is the latitude of the map's top edge, north positive. The default is `27`.
 - `-bottom-lat <deg>` is the latitude of the map's bottom edge. The default is `7`.
+- `-wind-rays <n>` is the number of rays traced for each wind (see [Moisture and lift](#moisture-and-lift)). The default is `5`; at least 1.
+- `-wind-spread <deg>` is the largest offset of a wind's rays from its bearing, in degrees. The default is `20`; at least 0.
 - `-rivers <file>` is an `hmz2riv` JSON file, used only to draw rivers on the preview. Optional; its grid must match.
 - `-output <file>` is the JSON file to write. Required.
 - `-preview <file>` is a PNG preview to write. Optional.
@@ -85,14 +87,28 @@ P = windward × (share + (1 − share) × moisture × (1 + 1.5 × lift / 1000))
 
 ### Moisture and lift
 
-For each land hex and each wind that has weight at its latitude:
+Each wind is traced along a **fan** of rays rather than a single line.
+With `n` rays (`-wind-rays`) and a spread of `s` degrees (`-wind-spread`), ray `i` (0-based) follows the wind's bearing plus the offset:
 
-1. **Trace upwind.** From the hex center, step toward the bearing the wind blows from, 5 campaign km (48 px at apothem 48) at a time, for at most 1,000 km. At each step, find the pixel containing the point and take the hex containing that pixel's center, as `hmz2ter` assigns pixels to hexes. The point's coordinates are rounded to 6 decimals before taking `floor(x)` and `floor(y)`, so a point exactly on a pixel edge belongs to the pixel to its right or below, whatever the floating-point error. Both rules matter: a 5 km step is exactly one apothem, so with the 60° trades every other step lands exactly on a hex edge (which a pixel center never does), and every step's y is a whole number of pixels. Stop at the first point that is off the raster, in a hex not in the grid, or in salt water, cliffs, or badlands: the wind picks up moisture there, because the game world has sea beyond the border cuts and the map's edges.
+```text
+offset_i = −s + 2·s·i / (n − 1)
+```
+
+A single ray (`n = 1`) has offset 0, the wind's own bearing.
+The defaults, 5 rays and 20°, give the bearing −20°, −10°, 0°, +10°, and +20°: from 40° to 80° for the 60° trades.
+
+A single ray made the map striped: every hex downwind of the same peak or gap, along the same line, inherited the same moisture, and the biome thresholds turned those lines into straight bands of color parallel to the wind.
+Averaging over a fan spreads a peak's rain shadow the way real wind does, so the bands become gradients; broad rain shadows behind whole ranges remain.
+
+For each land hex, each wind that has weight at its latitude, and each of that wind's rays, along the ray's bearing:
+
+1. **Trace upwind.** From the hex center, step toward the ray's bearing, 5 campaign km (48 px at apothem 48) at a time, for at most 1,000 km. At each step, find the pixel containing the point and take the hex containing that pixel's center, as `hmz2ter` assigns pixels to hexes. The point's coordinates are rounded to 6 decimals before taking `floor(x)` and `floor(y)`, so a point exactly on a pixel edge belongs to the pixel to its right or below, whatever the floating-point error. Both rules matter: a 5 km step is exactly one apothem, so on the trades' central 60° ray every other step lands exactly on a hex edge (which a pixel center never does), and every step's y is a whole number of pixels. Stop at the first point that is off the raster, in a hex not in the grid, or in salt water, cliffs, or badlands: the wind picks up moisture there, because the game world has sea beyond the border cuts and the map's edges.
 2. **Build the profile**: 0 m for the sea, then the median elevation of each hex stepped through, farthest first, then the hex's own median elevation. Lakes count at their surface elevation. A step can land in the same hex as the step before, or in the hex itself; it still counts.
 3. **Moisture** starts at 1 and, for each step along the profile, is multiplied by `exp(−5 / 800 − rise / 1500)`, where `rise` is the height gained since the previous point, in meters (0 when descending). So 800 km of lowland takes away 63% of the moisture, and so does a climb of 1,500 m. Air that has crossed a mountain range arrives dry: the rain shadow.
 4. **Lift** is the hex's elevation minus the lowest point among the 6 profile points before it (30 km upwind), or 0 if none is lower. With fewer than 6 points before the hex, the sea's 0 m is among them.
 
-Where the trades and westerlies are blended, moisture and lift are each blended with the same weights.
+A wind's moisture and lift are the **means** over its rays: the sums, in ray order (`i` from 0), divided by `n`.
+Where the trades and westerlies are blended, each wind's means are blended with the same weights.
 Moisture is rounded to 3 decimals and lift to the meter **before** computing precipitation.
 
 ## Biomes
@@ -149,28 +165,28 @@ In particular, an unset surface or biome on land is an error, `clear` is the bio
 
 ## Results
 
-On the Panama terrain (`hmz2ter` v0.1.0), 27°N to 7°N:
+On the Panama terrain (`hmz2ter` v0.1.0), 27°N to 7°N, with the default fan (5 rays, ±20°):
 
-| Biome                 | Land hexes |  Share |
-| --------------------- | ---------: | -----: |
-| `tropical-dry-forest` |      3,869 |  39.0% |
-| `scrubland`           |      2,152 |  21.7% |
-| `tropical-rainforest` |      1,394 |  14.1% |
-| `savanna`             |      1,393 |  14.1% |
-| `steppe`              |        458 |   4.6% |
-| `desert`              |        330 |   3.3% |
-| `temperate-forest`    |        156 |   1.6% |
-| `cloud-forest`        |         95 |   1.0% |
-| `grassland`           |         48 |   0.5% |
-| `alpine`              |         19 |   0.2% |
+| Biome                 | Land hexes |  Share | v0.1.0 (1 ray) |
+| --------------------- | ---------: | -----: | -------------: |
+| `tropical-dry-forest` |      3,861 |  38.9% |          3,869 |
+| `scrubland`           |      2,193 |  22.1% |          2,152 |
+| `savanna`             |      1,524 |  15.4% |          1,393 |
+| `tropical-rainforest` |      1,298 |  13.1% |          1,394 |
+| `steppe`              |        501 |   5.1% |            458 |
+| `desert`              |        249 |   2.5% |            330 |
+| `temperate-forest`    |        143 |   1.4% |            156 |
+| `cloud-forest`        |         73 |   0.7% |             95 |
+| `grassland`           |         53 |   0.5% |             48 |
+| `alpine`              |         19 |   0.2% |             19 |
 
-| Surface      | Land hexes |
-| ------------ | ---------: |
-| `clear`      |      9,685 |
-| `mangroves`  |         61 |
-| `swamps`     |         60 |
-| `salt-flats` |         56 |
-| `marshes`    |         52 |
+| Surface      | Land hexes | v0.1.0 (1 ray) |
+| ------------ | ---------: | -------------: |
+| `clear`      |      9,685 |          9,685 |
+| `swamps`     |         63 |             60 |
+| `mangroves`  |         62 |             61 |
+| `salt-flats` |         62 |             56 |
+| `marshes`    |         42 |             52 |
 
 No hex is `glacial-ice`, `bogs`, `tundra`, `boreal-forest`, or `temperate-rainforest`.
 
@@ -178,18 +194,22 @@ The south (7–15°N) is rainforest on the windward Caribbean slopes and the sou
 The middle (15–21°N) is dry forest that turns to scrub and savanna in the rain shadows, which run diagonally down and to the left from the cordillera with the east-north-east trades.
 The north (23–27°N) is in the subtropical dry belt: a desert in the Chiriquí lowland behind Talamanca, steppe and montane forest on the highlands, cloud forest on their windward slopes, and alpine on the crest above about 2,600 m.
 
+Compared with the single ray of v0.1.0, the fan removes the straight diagonal stripes of rainforest, dry forest, and savanna, most visibly in the Darién: the extremes soften (less rainforest and desert, more savanna and steppe), and cloud forest, which needs at least 100 m of lift, shrinks because lift is now averaged over rays that don't all climb the same slope.
+Temperatures don't depend on the wind, so alpine is unchanged.
+With `-wind-rays 1`, every hex is identical to v0.1.0's output.
+
 Every count was cross-checked against an independent Python calculation, written from this README, with no mismatches.
 
 ## Output
 
 ```json
 {
-  "hmz2bio_version": "0.1.0",
+  "hmz2bio_version": "0.2.0",
   "terrain": { "file_name": "pandemokh-a48-terrain.json" },
   "hmz2ter_version": "0.1.0",
   "heightmap": { ... }, "grid": { ... }, "rivers": { ... }, "rules": { ... }, "method": { ... },
   "lakes": [ ... ], "volcanoes": [ ... ], "stats": { ... },
-  "climate_rules": { "top_lat_deg": 27, "bottom_lat_deg": 7, "sea_level_temp_c": [ [0, 27], ... ], "lapse_rate_c_per_km": 6.5, ... },
+  "climate_rules": { "top_lat_deg": 27, "bottom_lat_deg": 7, "sea_level_temp_c": [ [0, 27], ... ], "lapse_rate_c_per_km": 6.5, ..., "wind_rays": 5, "wind_spread_deg": 20, ... },
   "climate_method": { "latitude": "...", "temperature": "...", "precipitation": "...", "biome": "...", "surface": "..." },
   "climate_stats": { "land_hexes": 9914, "biomes": { ... }, "surfaces": { ... } },
   "hexes": [
@@ -197,14 +217,14 @@ Every count was cross-checked against an independent Python calculation, written
       "pixels": 7982, "valid_pixels": 7982, "land_fraction": 1,
       "elevation": { "min": 102, "p5": 108, "median": 207, "p95": 449, "max": 593 }, "relief_m": 341,
       "climate": { "latitude_deg": 26.73, "temperature_c": 20.3, "warmest_c": 25.2, "coldest_c": 15.4,
-                   "precipitation_mm": 1046, "moisture": 0.866, "lift_m": 207 } },
+                   "precipitation_mm": 1041, "moisture": 0.86, "lift_m": 207 } },
     ...
   ]
 }
 ```
 
 Every field of the `hmz2ter` file is carried through unchanged, including each hex's; `hexes` adds `surface` and `biome` on land and a `climate` object on land hexes only.
-`climate_rules` holds every setting and threshold above.
+`climate_rules` holds every setting and threshold above, including the fan's `wind_rays` and `wind_spread_deg`.
 
 Climate values are rounded first to 6 decimals, which absorbs floating-point noise, and then half away from zero: latitude to 0.01°, temperatures to 0.1 °C, precipitation to 1 mm, moisture to 0.001, and lift to 1 m.
 The mean temperature, warmest, and coldest months are each rounded from the unrounded mean and range.

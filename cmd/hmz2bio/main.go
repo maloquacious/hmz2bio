@@ -38,6 +38,8 @@ func run(args []string, stdout io.Writer) error {
 	}
 	fs.Float64Var(&rules.TopLat, "top-lat", rules.TopLat, "latitude of the map's top edge, in degrees (north positive)")
 	fs.Float64Var(&rules.BottomLat, "bottom-lat", rules.BottomLat, "latitude of the map's bottom edge, in degrees (north positive)")
+	fs.IntVar(&rules.WindRays, "wind-rays", rules.WindRays, "rays traced per wind, evenly spaced across the spread")
+	fs.Float64Var(&rules.WindSpreadDeg, "wind-spread", rules.WindSpreadDeg, "largest offset of a wind's rays from its bearing, in degrees")
 	riversFile := fs.String("rivers", "", "hmz2riv JSON file, to draw rivers on the preview (optional)")
 	output := fs.String("output", "", "JSON file to write (required)")
 	preview := fs.String("preview", "", "PNG preview file to write (optional)")

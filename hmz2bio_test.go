@@ -4,6 +4,7 @@ package hmz2bio
 
 import (
 	"math"
+	"slices"
 	"strings"
 	"testing"
 
@@ -107,6 +108,75 @@ func TestProfile(t *testing.T) {
 	// width (one 5 km step still lands in column 0).
 	if p := m.Profile(h, 270, r); len(p) > 3 {
 		t.Errorf("westerly profile %v: want the sea, at most one sample, and the hex", p)
+	}
+}
+
+func TestWindOffsets(t *testing.T) {
+	r := DefaultRules()
+	for _, tc := range []struct {
+		rays   int
+		spread float64
+		want   []float64
+	}{
+		{5, 20, []float64{-20, -10, 0, 10, 20}},
+		{1, 20, []float64{0}},
+		{2, 15, []float64{-15, 15}},
+		{3, 0, []float64{0, 0, 0}},
+	} {
+		r.WindRays, r.WindSpreadDeg = tc.rays, tc.spread
+		if got := r.WindOffsets(); !slices.Equal(got, tc.want) {
+			t.Errorf("%d rays, spread %g: got %v, want %v", tc.rays, tc.spread, got, tc.want)
+		}
+	}
+	for _, bad := range []struct {
+		rays   int
+		spread float64
+	}{{0, 20}, {5, -1}} {
+		r := DefaultRules()
+		r.WindRays, r.WindSpreadDeg = bad.rays, bad.spread
+		if r.Validate() == nil {
+			t.Errorf("%d rays, spread %g: no error", bad.rays, bad.spread)
+		}
+	}
+}
+
+// TestFan checks that a single ray is the old single-line trace, and that a
+// fan's result is the mean of its rays.
+func TestFan(t *testing.T) {
+	g, err := hmz2ele.NewGrid(48, 1000, 400)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var hexes []hmz2ter.HexJSON
+	for row := range g.Rows {
+		for col := range g.Columns {
+			if !g.Contains(col, row) {
+				continue
+			}
+			h := hmz2ter.HexJSON{Col: col, Row: row, Landform: hmz2ter.SaltWater}
+			if col <= 7 {
+				h.Landform = hmz2ter.Hills
+				h.Elevation = &hmz2ter.ElevationJSON{Median: int16(100*col + 37*(row%3))}
+			}
+			hexes = append(hexes, h)
+		}
+	}
+	m := NewMap(g, hexes)
+	h := &m.Hexes[slices.IndexFunc(m.Hexes, func(h hmz2ter.HexJSON) bool { return h.Col == 1 && h.Row == 2 })]
+	r := DefaultRules()
+	r.WindRays = 1
+	mo, li := r.Moisture(m.Profile(h, 90, r))
+	if fm, fl := m.Fan(h, 90, r); fm != mo || fl != li {
+		t.Errorf("one ray: got %v, %v; want %v, %v", fm, fl, mo, li)
+	}
+	r = DefaultRules()
+	var sm, sl float64
+	for _, o := range r.WindOffsets() {
+		m1, l1 := r.Moisture(m.Profile(h, 90+o, r))
+		sm, sl = sm+m1, sl+l1
+	}
+	if fm, fl := m.Fan(h, 90, r); fm != sm/5 || fl != sl/5 {
+		t.Errorf("five rays: got %v, %v; want %v, %v", fm, fl, sm/5, sl/5)
 	}
 }
 
