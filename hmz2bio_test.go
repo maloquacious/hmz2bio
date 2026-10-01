@@ -303,11 +303,11 @@ func TestAtPixelEdge(t *testing.T) {
 		}
 	}
 	m := NewMap(g, hexes)
-	// In odd column 1, y = 96 is the edge between hexes (1, 0) above and (1, 1) below.
-	x, _ := g.Center(1, 1)
+	// In even column 2, y = 96 is the edge between hexes (2, 0) above and (2, 1) below.
+	x, _ := g.Center(2, 1)
 	for _, y := range []float64{96, 96 - 1e-12, 96 + 1e-12} {
-		if h := m.At(x, y); h == nil || h.Col != 1 || h.Row != 1 {
-			t.Errorf("At(%g, %.15g) = %+v, want hex (1, 1)", x, y, h)
+		if h := m.At(x, y); h == nil || h.Col != 2 || h.Row != 1 {
+			t.Errorf("At(%g, %.15g) = %+v, want hex (2, 1)", x, y, h)
 		}
 	}
 }

@@ -145,7 +145,7 @@ Every land hex gets a surface:
 
 1. **`glacial-ice`** if the warmest month is below 0 °C, on any landform. Its biome is `clear`.
 2. Otherwise the hex is **`clear`** unless it can hold a wetland, which needs `flats` or `plains` and either:
-   - `hmz2ter`'s `flat-surface` flag with a median elevation of **60 m** or less, which excludes the filled voids in the source (95 m and up on Panama); or
+   - `hmz2ter`'s `flat-surface` flag with a median elevation of **60 m** or less, which excludes the filled voids in the source (96 m and up on Panama); or
    - `flats` with the `coast` or `river` flag and a median elevation of **10 m** or less: tidal flats and floodplains.
 3. A hex that can hold a wetland is:
    - **`salt-flats`** if its precipitation is below the aridity limit (coastal salt pans and inland playas);
@@ -165,28 +165,28 @@ In particular, an unset surface or biome on land is an error, `clear` is the bio
 
 ## Results
 
-On the Panama terrain (`hmz2ter` v0.1.0), 27°N to 7°N, with the default fan (5 rays, ±20°):
+On the Panama terrain (`hmz2ter` v0.2.0), 27°N to 7°N, with the default fan (5 rays, ±20°):
 
 | Biome                 | Land hexes |  Share | v0.1.0 (1 ray) |
 | --------------------- | ---------: | -----: | -------------: |
-| `tropical-dry-forest` |      3,861 |  38.9% |          3,869 |
-| `scrubland`           |      2,193 |  22.1% |          2,152 |
-| `savanna`             |      1,524 |  15.4% |          1,393 |
-| `tropical-rainforest` |      1,298 |  13.1% |          1,394 |
-| `steppe`              |        501 |   5.1% |            458 |
-| `desert`              |        249 |   2.5% |            330 |
-| `temperate-forest`    |        143 |   1.4% |            156 |
-| `cloud-forest`        |         73 |   0.7% |             95 |
-| `grassland`           |         53 |   0.5% |             48 |
-| `alpine`              |         19 |   0.2% |             19 |
+| `tropical-dry-forest` |      3,879 |  39.1% |          3,896 |
+| `scrubland`           |      2,210 |  22.3% |          2,180 |
+| `savanna`             |      1,511 |  15.2% |          1,357 |
+| `tropical-rainforest` |      1,278 |  12.9% |          1,376 |
+| `steppe`              |        495 |   5.0% |            453 |
+| `desert`              |        246 |   2.5% |            329 |
+| `temperate-forest`    |        159 |   1.6% |            164 |
+| `cloud-forest`        |         64 |   0.6% |             92 |
+| `grassland`           |         55 |   0.6% |             50 |
+| `alpine`              |         20 |   0.2% |             20 |
 
 | Surface      | Land hexes | v0.1.0 (1 ray) |
 | ------------ | ---------: | -------------: |
-| `clear`      |      9,685 |          9,685 |
-| `swamps`     |         63 |             60 |
-| `mangroves`  |         62 |             61 |
-| `salt-flats` |         62 |             56 |
-| `marshes`    |         42 |             52 |
+| `clear`      |      9,704 |          9,704 |
+| `mangroves`  |         63 |             63 |
+| `salt-flats` |         58 |             55 |
+| `swamps`     |         50 |             47 |
+| `marshes`    |         42 |             48 |
 
 No hex is `glacial-ice`, `bogs`, `tundra`, `boreal-forest`, or `temperate-rainforest`.
 
@@ -196,7 +196,7 @@ The north (23–27°N) is in the subtropical dry belt: a desert in the Chiriquí
 
 Compared with the single ray of v0.1.0, the fan removes the straight diagonal stripes of rainforest, dry forest, and savanna, most visibly in the Darién: the extremes soften (less rainforest and desert, more savanna and steppe), and cloud forest, which needs at least 100 m of lift, shrinks because lift is now averaged over rays that don't all climb the same slope.
 Temperatures don't depend on the wind, so alpine is unchanged.
-With `-wind-rays 1`, every hex is identical to v0.1.0's output.
+The v0.1.0 column is `-wind-rays 1` on the same terrain: with one ray, every hex is identical to v0.1.0's output.
 
 Every count was cross-checked against an independent Python calculation, written from this README, with no mismatches.
 
@@ -204,20 +204,20 @@ Every count was cross-checked against an independent Python calculation, written
 
 ```json
 {
-  "hmz2bio_version": "0.2.0",
+  "hmz2bio_version": "0.3.0",
   "terrain": { "file_name": "pandemokh-a48-terrain.json" },
-  "hmz2ter_version": "0.1.0",
+  "hmz2ter_version": "0.2.0",
   "heightmap": { ... }, "grid": { ... }, "rivers": { ... }, "rules": { ... }, "method": { ... },
   "lakes": [ ... ], "volcanoes": [ ... ], "stats": { ... },
   "climate_rules": { "top_lat_deg": 27, "bottom_lat_deg": 7, "sea_level_temp_c": [ [0, 27], ... ], "lapse_rate_c_per_km": 6.5, ..., "wind_rays": 5, "wind_spread_deg": 20, ... },
   "climate_method": { "latitude": "...", "temperature": "...", "precipitation": "...", "biome": "...", "surface": "..." },
-  "climate_stats": { "land_hexes": 9914, "biomes": { ... }, "surfaces": { ... } },
+  "climate_stats": { "land_hexes": 9917, "biomes": { ... }, "surfaces": { ... } },
   "hexes": [
-    { "col": 50, "row": 2, "landform": "hills", "surface": "clear", "biome": "savanna", "flags": [ "river" ], "center": 147,
-      "pixels": 7982, "valid_pixels": 7982, "land_fraction": 1,
-      "elevation": { "min": 102, "p5": 108, "median": 207, "p95": 449, "max": 593 }, "relief_m": 341,
-      "climate": { "latitude_deg": 26.73, "temperature_c": 20.3, "warmest_c": 25.2, "coldest_c": 15.4,
-                   "precipitation_mm": 1041, "moisture": 0.86, "lift_m": 207 } },
+    { "col": 50, "row": 2, "landform": "mountains", "surface": "clear", "biome": "savanna", "flags": [ "impassable" ], "center": 422,
+      "pixels": 7982, "valid_pixels": 7487, "land_fraction": 0.938,
+      "elevation": { "min": 134, "p5": 167, "median": 341, "p95": 612, "max": 660 }, "relief_m": 445,
+      "climate": { "latitude_deg": 26.77, "temperature_c": 19.4, "warmest_c": 24.3, "coldest_c": 14.5,
+                   "precipitation_mm": 1085, "moisture": 0.787, "lift_m": 341 } },
     ...
   ]
 }
