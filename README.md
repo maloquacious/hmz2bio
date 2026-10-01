@@ -165,7 +165,7 @@ In particular, an unset surface or biome on land is an error, `clear` is the bio
 
 ## Results
 
-On the Panama terrain (`hmz2ter` v0.2.0), 27°N to 7°N, with the default fan (5 rays, ±20°):
+On the Panama terrain (`hmz2ter` v0.3.0), 27°N to 7°N, with the default fan (5 rays, ±20°):
 
 | Biome                 | Land hexes |  Share | v0.1.0 (1 ray) |
 | --------------------- | ---------: | -----: | -------------: |
@@ -206,7 +206,7 @@ Every count was cross-checked against an independent Python calculation, written
 {
   "hmz2bio_version": "0.3.0",
   "terrain": { "file_name": "pandemokh-a48-terrain.json" },
-  "hmz2ter_version": "0.2.0",
+  "hmz2ter_version": "0.3.0",
   "heightmap": { ... }, "grid": { ... }, "rivers": { ... }, "rules": { ... }, "method": { ... },
   "lakes": [ ... ], "volcanoes": [ ... ], "stats": { ... },
   "climate_rules": { "top_lat_deg": 27, "bottom_lat_deg": 7, "sea_level_temp_c": [ [0, 27], ... ], "lapse_rate_c_per_km": 6.5, ..., "wind_rays": 5, "wind_spread_deg": 20, ... },
